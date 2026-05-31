@@ -19,11 +19,16 @@ async def process_message(message: dict[str, Any]):
         raise ValueError("Worker message must include class_name and method_name")
 
     dto_class = DTO_REQUEST_MAPPER.get(method_name)
-    if dto_class is None:
-        raise ValueError(f"No DTO request mapper found for method {method_name}")
 
     try:
-        dto = dto_class.model_validate(payload)
+        if dto_class is not None:
+            dto = dto_class.model_validate(payload)
+        else:
+            logger.info(
+                "No DTO class found for method, passing raw payload",
+                context={"method_name": method_name},
+            )
+            dto = payload
     except ValidationError:
         logger.error(
             "Worker message payload validation failed",
@@ -59,7 +64,9 @@ def _resolve_service(class_name: str):
         if service.__class__.__name__ == class_name:
             return service
     snake_name = _camel_to_snake(class_name)
-    attr_name = snake_name if snake_name.endswith("_service") else f"{snake_name}_service"
+    attr_name = (
+        snake_name if snake_name.endswith("_service") else f"{snake_name}_service"
+    )
     service = getattr(services, attr_name, None)
     if service is None:
         raise ValueError(f"Service class {class_name} not found")
