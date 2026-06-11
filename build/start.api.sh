@@ -1,1 +1,4 @@
-python -m src.api.main
+#!/bin/sh
+set -e
+
+exec python -m src.api.main
