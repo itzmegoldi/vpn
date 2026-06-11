@@ -28,4 +28,6 @@ build/
 .coverage.*
 htmlcov/
 .claude
-.venv
+.venv/
+__pycache__/
+*.pyc
