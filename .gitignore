@@ -27,3 +27,5 @@ build/
 *.coverage
 .coverage.*
 htmlcov/
+.claude
+.venv
