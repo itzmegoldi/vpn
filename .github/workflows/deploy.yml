@@ -21,17 +21,15 @@ jobs:
       - name: Build Image API
         run: |
           echo "Building API Image"
-          docker build -f build/Dockerfile.api -t ghcr.io/${{ github.repository_owner }}/vpn-api:${{ github.sha }} .
+          docker build -f build/Dockerfile.api -t ghcr.io/${{ github.repository_owner }}/vpn-api:latest .
 
       - name: Build Image Worker
         run: |
           echo "Building Worker Image"
-          docker build -f build/Dockerfile.worker -t ghcr.io/${{ github.repository_owner }}/vpn-worker:${{ github.sha }} .
+          docker build -f build/Dockerfile.worker -t ghcr.io/${{ github.repository_owner }}/vpn-worker:latest .
 
       - name: Push Image
         run: |
           echo "Pushing Image"
           docker push ghcr.io/${{ github.repository_owner }}/vpn-api:latest
           docker push ghcr.io/${{ github.repository_owner }}/vpn-worker:latest
-          docker push ghcr.io/${{ github.repository_owner }}/vpn-api:${{ github.sha }}
-          docker push ghcr.io/${{ github.repository_owner }}/vpn-worker:${{ github.sha }}
