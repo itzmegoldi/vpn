@@ -10,31 +10,33 @@ class PostgresDatabase:
     def __init__(self, config: DatabaseConfig):
         self.config = config
 
-        connect_args = None
+        engine_kwargs = {
+            "pool_pre_ping": True,
+            "pool_recycle": 3600,
+        }
         if self.config.ssl is not None:
-            connect_args = {
+            engine_kwargs["connect_args"] = {
                 "sslmode": self.config.ssl.sslmode,
                 "sslcert": f"{os.getcwd()}/{self.config.ssl.sslcertpath}",
             }
         self.engine = create_engine(
             self.config.sync_url,
-            connect_args=connect_args,
-            pool_pre_ping=True,
-            pool_recycle=3600,
+            **engine_kwargs
         )
 
-        async_connect_args = None
+        async_engine_kwargs = {
+            "pool_pre_ping": True,
+            "pool_recycle": 3600,
+        }
         if self.config.ssl is not None:
             ssl_context = ssl.create_default_context(ssl.Purpose.SERVER_AUTH)
             ssl_context.load_cert_chain(
                 certfile=f"{os.getcwd()}/{self.config.ssl.sslcertpath}"
             )
-            async_connect_args = {"ssl": ssl_context}
+            async_engine_kwargs["connect_args"] = {"ssl": ssl_context}
         self.async_engine = create_async_engine(
             self.config.async_url,
-            connect_args=async_connect_args,
-            pool_pre_ping=True,
-            pool_recycle=3600,
+            **async_engine_kwargs
         )
 
     def get_session(self) -> Session:
