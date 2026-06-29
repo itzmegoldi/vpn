@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from typing import Optional
+
+from pydantic import BaseModel
 
 
 class DatabaseSslConfig(BaseModel):
@@ -27,7 +28,7 @@ class DatabaseConfig(BaseModel):
 
 class RedisConfig(BaseModel):
     host: str
-    port: int
+    port: str
     password: str | None = None
     queue_name: str = "vpn_worker_queue"
 

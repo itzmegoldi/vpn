@@ -4,15 +4,13 @@ import ipaddress
 from fastapi import HTTPException
 
 from src.builder.clients import Clients
-from src.config.settings import AppConfig
+from src.config.config import Config
 from src.models.vpn import VPNClient, VPNServer
 from src.repository.vpn import VPNRepositoryInterface
 
 
 class VPNService:
-    def __init__(
-        self, clients: Clients, config: AppConfig, repo: VPNRepositoryInterface
-    ):
+    def __init__(self, clients: Clients, config: Config, repo: VPNRepositoryInterface):
         self.clients = clients
         self.config = config
         self.repo = repo
@@ -169,7 +167,9 @@ class VPNService:
 
     def _generate_key_pair(self, ssh) -> tuple[str, str]:
         private_key = ssh.execute_command("wg genkey").strip()
-        public_key = ssh.execute_command(f"printf '%s' '{private_key}' | wg pubkey").strip()
+        public_key = ssh.execute_command(
+            f"printf '%s' '{private_key}' | wg pubkey"
+        ).strip()
         return private_key, public_key
 
     def _server_config(self, private_key: str, address: str, port: int) -> str:

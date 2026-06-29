@@ -16,9 +16,17 @@ class RedisClient:
             ) from exc
 
         self.config = config
-        self.client = redis.Redis.from_url(config.sync_url, decode_responses=True)
-        self.async_client = async_redis.Redis.from_url(
-            config.async_url, decode_responses=True
+        self.client = redis.Redis(
+            host=config.host,
+            port=int(config.port),
+            password=config.password,
+            decode_responses=True,
+        )
+        self.async_client = async_redis.Redis(
+            host=config.host,
+            port=int(config.port),
+            password=config.password,
+            decode_responses=True,
         )
 
     async def increment_with_expiry(self, key: str, expiry_seconds: int) -> int:
@@ -44,6 +52,18 @@ class RedisClient:
                 continue
             _, raw_message = item
             yield json.loads(raw_message)
+
+    def test_connection(self) -> bool:
+        try:
+            return self.client.ping()
+        except Exception:
+            return False
+
+    async def async_test_connection(self) -> bool:
+        try:
+            return await self.async_client.ping()
+        except Exception:
+            return False
 
     async def close(self):
         await self.async_client.aclose()

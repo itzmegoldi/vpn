@@ -1,18 +1,28 @@
+import os
+
+from dotenv import load_dotenv
+
 from src.builder import set_clients, set_config, set_service
 from src.builder.clients import Clients
 from src.builder.repos import Repositories
 from src.builder.services import Services
-from src.config.settings import AppConfig
+from src.config.config import Config
 from src.pkg import logging
 
 logger = logging.get_logger()
 
 
-def build_config() -> AppConfig:
-    return AppConfig()
+if os.environ.get("APP_ENV", "") == "local":
+    load_dotenv()
 
 
-def build_clients(config: AppConfig):
+def fetch_config() -> Config:
+    config_path = os.path.join(os.getcwd(), "config/")
+    app_env = os.environ.get("APP_ENV", "dev")
+    return Config.from_yaml(config_path, app_env)
+
+
+def build_clients(config: Config):
     # Placeholder for building clients (e.g., database, cache)
     return (
         Clients()
@@ -31,15 +41,9 @@ def build_service_and_repository(clients, config):
 
 
 def fetch_and_build():
-    config = build_config()
+    config = fetch_config()
     clients = build_clients(config=config)
     service = build_service_and_repository(clients=clients, config=config)
     set_config(config)
     set_clients(clients)
     set_service(service)
-
-
-def fetch_config() -> AppConfig:
-    logger.info("Fetching configuration...")
-    config = AppConfig()
-    return config

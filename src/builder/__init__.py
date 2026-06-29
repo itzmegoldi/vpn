@@ -1,20 +1,22 @@
 from typing import Optional
 
-from src.config.settings import AppConfig
-from src.builder.services import Services
 from src.builder.clients import Clients
+from src.builder.services import Services
 
-_config: Optional[AppConfig] = None
+from src.config.config import Config
+
+_config: Optional[Config] = None
 _clients: Optional[Clients] = None
 _service: Optional[Services] = None
 
 
-def set_config(config: AppConfig):
+def set_config(config: Config):
     global _config
     _config = config
 
 
-def get_config() -> AppConfig:
+def get_config() -> Config:
+
     if _config is None:
         raise ValueError("Config not set")
     return _config

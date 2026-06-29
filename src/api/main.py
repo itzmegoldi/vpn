@@ -1,7 +1,8 @@
 from contextlib import asynccontextmanager
+from typing import Annotated
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -9,8 +10,12 @@ from src.api import router as api_router
 from src.builder import get_clients
 from src.builder.helper import fetch_and_build, fetch_config
 from src.pkg import logging
-from src.pkg.middlewares.standard import ErrorHandlingMiddleware, LoggerInitMiddleware
-from src.pkg.middlewares.standard import RateLimitMiddleware
+from src.pkg.auth import verify_client
+from src.pkg.middlewares.standard import (
+    ErrorHandlingMiddleware,
+    LoggerInitMiddleware,
+    RateLimitMiddleware,
+)
 
 logging.configure_logger(
     default_logger_names=[
@@ -32,15 +37,18 @@ class HealthCheckResponse(BaseModel):
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_: FastAPI):
     # Initialize resources here (e.g., database connections, caches)
     fetch_and_build()
     yield
-    # Clean up resources here (e.g., close database connections, clear caches)
-    await get_clients().redis_client.close()
 
 
-app = FastAPI(title="VPN API", lifespan=lifespan)
+app = FastAPI(
+    title="VPN API",
+    lifespan=lifespan,
+    redoc_url=None,
+    openapi_tags=[{"name": "API", "description": "API endpoints"}],
+)
 
 allowed_origins = ["*"]
 # Adjust this in production for security
@@ -61,15 +69,13 @@ app.add_middleware(
 app.add_middleware(LoggerInitMiddleware)
 app.add_middleware(RateLimitMiddleware)
 app.add_middleware(ErrorHandlingMiddleware)
-app.include_router(api_router, prefix="/api", tags=["API"])
+app.include_router(
+    api_router, prefix="/api", tags=["API"], dependencies=[Depends(verify_client)]
+)
 
 
 if __name__ == "__main__":
     config = fetch_config()
     uvicorn.run(
-        "src.api.main:app",
-        host=config.server_host,
-        port=config.server_port,
-        log_level=None,
-        reload=True,
+        app=app, host=config.server.host, port=config.server.port, log_level=None
     )
