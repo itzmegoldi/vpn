@@ -1,6 +1,7 @@
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
+from fastapi.exceptions import HTTPException
 from pydantic import BaseModel, Field
 
 from src.builder import get_service
@@ -20,7 +21,7 @@ class VPNServerSetupRequest(BaseModel):
     name: str
     public_ip: str
     ssh_username: str
-    ssh_key_path: str
+    ssh_key: str
     wireguard_interface: str = "wg0"
     wireguard_port: int = Field(default=51820, ge=1, le=65535)
     vpn_subnet: str = "10.8.0.0/24"
@@ -43,11 +44,17 @@ class VPNServerResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-@router.post("/setup", response_model=VPNServerResponse)
+@router.post("/setup", response_model=VPNServerResponse, status_code=201)
 def setup_server(payload: VPNServerSetupRequest, service: VpnServiceDep):
-    return service.setup_server(payload)
+    try:
+        return service.setup_server(payload)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 
-@router.get("", response_model=list[VPNServerResponse])
+@router.get("", response_model=list[VPNServerResponse], status_code=200)
 def list_servers(service: VpnServiceDep):
-    return service.list_servers()
+    try:
+        return service.list_servers()
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

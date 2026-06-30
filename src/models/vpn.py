@@ -9,7 +9,7 @@ class VPNServer(BaseModel):
     name = Column(String, nullable=False)
     public_ip = Column(String, nullable=False)
     ssh_username = Column(String, nullable=False)
-    ssh_key_path = Column(String, nullable=False)
+    ssh_key = Column(String, nullable=False)
     wireguard_interface = Column(String, default="wg0")
     wireguard_port = Column(Integer, default=51820)
     vpn_subnet = Column(String, default="10.8.0.0/24")

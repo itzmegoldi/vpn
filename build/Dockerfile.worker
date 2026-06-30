@@ -1,8 +1,9 @@
-FROM python:3.11-slim AS base
+FROM python:3.12-slim AS base
 
-ENV VIRTUAL_ENV=/app/.venv \
+ENV MICRO_SERVICE=/app \
+    VIRTUAL_ENV=/app/.venv \
     PATH="/app/.venv/bin:$PATH" \
-    MICRO_SERVICE=/app
+    POETRY_VERSION=2.4.1
 
 RUN mkdir -p ${MICRO_SERVICE}
 
@@ -10,10 +11,13 @@ FROM base AS builder
 
 WORKDIR ${MICRO_SERVICE}
 
-COPY requirements.txt ./
-RUN python -m venv ${VIRTUAL_ENV} \
-    && pip install --upgrade --no-cache-dir pip \
-    && pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install --no-cache-dir poetry==${POETRY_VERSION}
+
+COPY pyproject.toml poetry.lock ./
+
+# Create the virtual environment inside /app/.venv
+RUN poetry config virtualenvs.in-project true \
+    && poetry install --no-root --only main
 
 FROM base AS runtime
 
@@ -22,12 +26,17 @@ WORKDIR ${MICRO_SERVICE}
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
+# Copy the virtual environment from the builder stage
 COPY --from=builder ${VIRTUAL_ENV} ${VIRTUAL_ENV}
+
+# Copy application source
 COPY src ./src
 COPY alembic ./alembic
 COPY alembic.ini ./
-COPY ./build/start.worker.sh ./start.worker.sh
+COPY build/start.worker.sh ./start.worker.sh
 
 RUN chmod +x ./start.worker.sh
+
+EXPOSE 8080
 
 ENTRYPOINT ["./start.worker.sh"]

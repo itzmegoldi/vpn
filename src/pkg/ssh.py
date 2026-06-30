@@ -9,13 +9,11 @@ class SSHClient:
     def __init__(self):
         self.client = None
 
-    def connect(self, hostname, username, key_filename):
+    def connect(self, hostname, username, pkey):
         try:
             self.client = paramiko.SSHClient()
             self.client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-            self.client.connect(
-                hostname=hostname, username=username, key_filename=key_filename
-            )
+            self.client.connect(hostname=hostname, username=username, pkey=pkey)
             logger.info(f"Connected to {hostname} via SSH")
         except Exception as e:
             logger.error(f"Failed to connect to {hostname} via SSH: {e}")

@@ -7,8 +7,9 @@ Create Date: 2026-05-31 12:00:00.000000
 
 from typing import Sequence, Union
 
-from alembic import op
 import sqlalchemy as sa
+
+from alembic import op
 
 
 revision: str = "create_vpn_tables"
@@ -23,7 +24,7 @@ def upgrade() -> None:
         sa.Column("name", sa.String(), nullable=False),
         sa.Column("public_ip", sa.String(), nullable=False),
         sa.Column("ssh_username", sa.String(), nullable=False),
-        sa.Column("ssh_key_path", sa.String(), nullable=False),
+        sa.Column("ssh_key", sa.String(), nullable=False),
         sa.Column("wireguard_interface", sa.String(), nullable=True),
         sa.Column("wireguard_port", sa.Integer(), nullable=True),
         sa.Column("vpn_subnet", sa.String(), nullable=True),

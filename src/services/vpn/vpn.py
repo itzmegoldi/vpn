@@ -1,18 +1,22 @@
 import base64
+import io
 import ipaddress
+
+import paramiko
 
 from fastapi import HTTPException
 
 from src.builder.clients import Clients
-from src.config.settings import AppConfig
+from src.config.config import Config
 from src.models.vpn import VPNClient, VPNServer
+from src.pkg import logging
 from src.repository.vpn import VPNRepositoryInterface
+
+logger = logging.get_logger()
 
 
 class VPNService:
-    def __init__(
-        self, clients: Clients, config: AppConfig, repo: VPNRepositoryInterface
-    ):
+    def __init__(self, clients: Clients, config: Config, repo: VPNRepositoryInterface):
         self.clients = clients
         self.config = config
         self.repo = repo
@@ -25,10 +29,13 @@ class VPNService:
 
         ssh = self.clients.new_ssh_client()
         try:
+            private_key = paramiko.Ed25519Key.from_private_key(
+                io.StringIO(payload.ssh_key)
+            )
             ssh.connect(
                 hostname=payload.public_ip,
                 username=payload.ssh_username,
-                key_filename=payload.ssh_key_path,
+                pkey=private_key,
             )
             self._install_wireguard(ssh)
             server_private_key, server_public_key = self._generate_key_pair(ssh)
@@ -48,6 +55,9 @@ class VPNService:
                 f"sudo systemctl enable wg-quick@{interface} && "
                 f"sudo systemctl restart wg-quick@{interface}"
             )
+        except Exception as e:
+            logger.error(f"Failed to setup server: {e}")
+            raise e
         finally:
             ssh.close()
 
@@ -69,7 +79,11 @@ class VPNService:
         )
 
     def list_servers(self) -> list[VPNServer]:
-        return self.repo.list_servers()
+        try:
+            return self.repo.list_servers()
+        except Exception as e:
+            logger.error(f"Failed to list servers: {e}")
+            raise e
 
     def create_client(self, payload) -> VPNClient:
         server = self._get_server_or_404(payload.server_id)
@@ -80,7 +94,7 @@ class VPNService:
             ssh.connect(
                 hostname=server.public_ip,
                 username=server.ssh_username,
-                key_filename=server.ssh_key_path,
+                pkey=server.ssh_key,
             )
             private_key, public_key = self._generate_key_pair(ssh)
             config_text = self._client_config(
@@ -169,7 +183,9 @@ class VPNService:
 
     def _generate_key_pair(self, ssh) -> tuple[str, str]:
         private_key = ssh.execute_command("wg genkey").strip()
-        public_key = ssh.execute_command(f"printf '%s' '{private_key}' | wg pubkey").strip()
+        public_key = ssh.execute_command(
+            f"printf '%s' '{private_key}' | wg pubkey"
+        ).strip()
         return private_key, public_key
 
     def _server_config(self, private_key: str, address: str, port: int) -> str:
