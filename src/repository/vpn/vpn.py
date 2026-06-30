@@ -24,8 +24,12 @@ class VPNRepository:
             return session.get(VPNServer, server_id)
 
     def list_servers(self) -> list[VPNServer]:
-        with self.db_handler.get_session() as session:
-            return session.query(VPNServer).order_by(VPNServer.id.desc()).all()
+        try:
+            with self.db_handler.get_session() as session:
+                result = session.query(VPNServer).order_by(VPNServer.id.desc()).all()
+                return result
+        except Exception as e:
+            raise e
 
     def create_client(self, data: dict) -> VPNClient:
         now = self._now()
