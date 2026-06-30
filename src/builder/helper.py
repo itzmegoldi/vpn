@@ -18,7 +18,7 @@ if os.environ.get("APP_ENV", "") == "local":
 
 def fetch_config() -> Config:
     config_path = os.path.join(os.getcwd(), "config/")
-    app_env = os.environ.get("APP_ENV", "dev")
+    app_env = os.environ.get("APP_ENV", "prod")
     return Config.from_yaml(config_path, app_env)
 
 

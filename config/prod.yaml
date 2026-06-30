@@ -1,5 +1,5 @@
 ---
-app_env: local
+app_env: prod
 server:
   host: 0.0.0.0
   port: 8080
