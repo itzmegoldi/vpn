@@ -1,9 +1,11 @@
-from starlette.middleware.base import BaseHTTPMiddleware
+import time
+from typing import Awaitable, Callable
+
 from fastapi import HTTPException, Request, Response
-from typing import Callable, Awaitable
+from starlette.middleware.base import BaseHTTPMiddleware
+
 from src.builder import get_clients, get_config
 from src.pkg import logging
-import time
 
 logger = logging.get_logger()
 
@@ -80,6 +82,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             count = await redis_client.increment_with_expiry(
                 key=key, expiry_seconds=config.rate_limit_window_seconds
             )
+            logger.info("Rate limit check", context={"count": count})
         except Exception as exc:
             logger.error("Rate limit check failed", context={"error": str(exc)})
             return await call_next(request)

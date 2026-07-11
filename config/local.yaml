@@ -15,7 +15,7 @@ database:
 redis:
   host: $env["REDIS_HOST"]
   port: $env["REDIS_PORT"]
-  # password: $env["REDIS_PASSWORD"]
+  password: $env["REDIS_PASSWORD"]
   queue_name: vpn_worker_queue
 rate_limit_requests: 60
 rate_limit_window_seconds: 60
