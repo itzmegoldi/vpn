@@ -21,12 +21,18 @@ class RedisClient:
             port=int(config.port),
             password=config.password,
             decode_responses=True,
+            socket_timeout=None,
+            socket_connect_timeout=10,
+            health_check_interval=30,
         )
         self.async_client = async_redis.Redis(
             host=config.host,
             port=int(config.port),
             password=config.password,
             decode_responses=True,
+            socket_timeout=None,
+            socket_connect_timeout=10,
+            health_check_interval=30,
         )
 
     async def increment_with_expiry(self, key: str, expiry_seconds: int) -> int:
