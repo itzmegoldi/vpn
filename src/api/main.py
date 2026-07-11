@@ -11,11 +11,7 @@ from src.builder import get_clients
 from src.builder.helper import fetch_and_build, fetch_config
 from src.pkg import logging
 from src.pkg.auth import verify_client
-from src.pkg.middlewares.standard import (
-    ErrorHandlingMiddleware,
-    LoggerInitMiddleware,
-    RateLimitMiddleware,
-)
+from src.pkg.middlewares.standard import ErrorHandlingMiddleware, LoggerInitMiddleware
 
 logging.configure_logger(
     default_logger_names=[
@@ -67,7 +63,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(LoggerInitMiddleware)
-app.add_middleware(RateLimitMiddleware)
 app.add_middleware(ErrorHandlingMiddleware)
 app.include_router(
     api_router, prefix="/api", tags=["API"], dependencies=[Depends(verify_client)]
