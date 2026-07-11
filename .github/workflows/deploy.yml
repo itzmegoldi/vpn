@@ -22,14 +22,37 @@ jobs:
         run: |
           echo "Building API Image"
           docker build -f build/Dockerfile.api -t ghcr.io/${{ github.repository_owner }}/vpn-api:latest .
+          docker build -f build/Dockerfile.api -t ghcr.io/${{ github.repository_owner }}/vpn-api:${{ github.sha }} .
 
       - name: Build Image Worker
         run: |
           echo "Building Worker Image"
           docker build -f build/Dockerfile.worker -t ghcr.io/${{ github.repository_owner }}/vpn-worker:latest .
+          docker build -f build/Dockerfile.worker -t ghcr.io/${{ github.repository_owner }}/vpn-worker:${{ github.sha }} .
 
       - name: Push Image
         run: |
           echo "Pushing Image"
           docker push ghcr.io/${{ github.repository_owner }}/vpn-api:latest
+          docker push ghcr.io/${{ github.repository_owner }}/vpn-api:${{ github.sha }}
           docker push ghcr.io/${{ github.repository_owner }}/vpn-worker:latest
+          docker push ghcr.io/${{ github.repository_owner }}/vpn-worker:${{ github.sha }}
+
+      - name: Checkout Kubernetes repo
+        uses: actions/checkout@v4
+        with:
+          repository: itzmegoldi/kube-gitops
+          token: ${{ secrets.K8S_REPO_TOKEN }}
+          path: kube-gitops
+
+      - name: Update API image
+        run: |
+          sed -i \
+            "s|image: ghcr.io/${{ github.repository_owner }}/vpn-api:.*|image: ghcr.io/${{ github.repository_owner }}/vpn-api:${{ github.sha }}|" \
+            kube-gitops/api-deployment.yaml
+
+      - name: Update Worker image
+        run: |
+          sed -i \
+            "s|image: ghcr.io/${{ github.repository_owner }}/vpn-worker:.*|image: ghcr.io/${{ github.repository_owner }}/vpn-worker:${{ github.sha }}|" \
+            kube-gitops/worker-deployment.yaml
